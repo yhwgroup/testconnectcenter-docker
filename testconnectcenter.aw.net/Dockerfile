@@ -1,23 +1,31 @@
 # Stage 1: Build the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /app
+WORKDIR /src
 
-# Copy the project files and restore dependencies
-COPY *.csproj ./
+# Copy the entire application source code into the container
+# Since the GitHub Actions context is './testconnectcenter.aw.net',
+# everything from that directory will be copied to /src in the container.
+COPY . .
+
+# Change the working directory to the project directory
+# This ensures that dotnet commands are run from where the .csproj file is located.
+WORKDIR /src/testconnectcenter.aw.net
+
+# Restore project dependencies
 RUN dotnet restore
 
-# Copy the rest of the application files and build
-COPY . .
-WORKDIR /app/testconnectcenter.aw.net
+# Publish the application for release
 RUN dotnet publish -c Release -o out
 
 # Stage 2: Create the runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app/testconnectcenter.aw.net/out .
 
-# Expose the port (e.g., 5011 as per launchSettings.json, or standard HTTP/HTTPS)
+# Copy the published output from the build stage to the final runtime image
+COPY --from=build /src/testconnectcenter.aw.net/out .
+
+# Expose the application's port
 EXPOSE 5011
 
-# Set the entry point for the application
+# Define the entry point for the application
 ENTRYPOINT ["dotnet", "testconnectcenter.aw.net.dll"]
