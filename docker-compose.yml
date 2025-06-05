@@ -1,0 +1,8 @@
+
+services:
+  your-app-name:
+    build: .
+    ports:
+      - "127.0.0.1:55911:5011"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
